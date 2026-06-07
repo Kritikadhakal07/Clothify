@@ -166,7 +166,7 @@
                     <span class="price">${{ item.price }}</span>
                   </div>
                 </div>
-                <a href="#" class="btn btn-block btn-success">Add to cart</a>
+                <a href="{% url 'add_cart' item.id %}" class="btn btn-block btn-success">Add to cart</a>
               </figcaption>
             </figure>
           </div>
