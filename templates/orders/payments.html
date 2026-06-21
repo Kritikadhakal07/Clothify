@@ -54,10 +54,12 @@
                         <dd class="text-right"><strong>${{ grand_total }}</strong></dd>
                     </dl>
                     <hr>
-                    <form method="POST" action="{% url 'confirm_order' order.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary btn-block">Place Order</button>
-                    </form>
+                   <form method="POST" action="{% url 'initiate_khalti_payment' order.id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary btn-block">
+        Pay with Khalti
+    </button>
+</form>
                 </div>
             </div>
         </div>

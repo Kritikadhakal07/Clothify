@@ -12,4 +12,8 @@ urlpatterns = [
     path('my_orders/', views.my_orders, name='my_orders'),
     path('order_detail/<str:order_number>/', views.order_detail, name='order_detail'),
 
+
+    path('initiate_khalti/<int:order_id>/', views.initiate_khalti_payment, name='initiate_khalti_payment'),
+    path('khalti_verify/', views.khalti_verify, name='khalti_verify'),
+
 ]

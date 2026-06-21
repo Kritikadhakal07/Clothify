@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,6 +30,18 @@ DEBUG = True
 LOGIN_URL = 'login'
 ALLOWED_HOSTS = []
 
+
+load_dotenv()  # loads .env from project root
+
+# ... existing code ...
+
+KHALTI_PUBLIC_KEY = os.getenv('KHALTI_PUBLIC_KEY')
+KHALTI_SECRET_KEY = os.getenv('KHALTI_SECRET_KEY')
+KHALTI_BASE_URL   = os.getenv('KHALTI_BASE_URL')
+
+# print("DEBUG KHALTI SECRET:", repr(KHALTI_SECRET_KEY))
+# print("DEBUG KHALTI SECRET:", repr(KHALTI_SECRET_KEY))
+# print("DEBUG KHALTI BASE URL:", repr(KHALTI_BASE_URL))
 
 # Application definition
 

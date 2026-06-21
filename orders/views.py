@@ -14,6 +14,12 @@ from .forms import OrderForm
 from .models import Order, OrderProduct
 
 
+import requests
+from django.conf import settings
+from django.urls import reverse
+from django.contrib import messages
+
+
 @login_required(login_url='login')
 def place_order(request):
     current_user = request.user
@@ -127,3 +133,96 @@ def order_detail(request, order_number):
         'sub_total': sub_total,
     }
     return render(request, 'orders/order_detail.html', context)
+
+def initiate_khalti_payment(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    url = settings.KHALTI_BASE_URL + 'epayment/initiate/'
+    headers = {
+        'Authorization': f'key {settings.KHALTI_SECRET_KEY}',
+        'Content-Type': 'application/json',
+    }
+
+    return_url = request.build_absolute_uri(reverse('khalti_verify')) + f'?order_id={order.id}'
+
+    payload = {
+        "return_url": return_url,
+        "website_url": request.build_absolute_uri('/'),
+        "amount": int(order.order_total * 100),
+        "purchase_order_id": order.order_number,
+        "purchase_order_name": f"Order-{order.order_number}",
+        "customer_info": {
+            "name": order.full_name(),
+            "email": order.email,
+            "phone": order.phone,
+        }
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+
+    print("KHALTI STATUS CODE:", response.status_code)   # ← debug
+    print("KHALTI RESPONSE:", data)                       # ← debug
+
+    if response.status_code == 200 and 'payment_url' in data:
+        order.khalti_pidx = data['pidx']
+        order.save()
+        return redirect(data['payment_url'])
+    else:
+        messages.error(request, 'Could not initiate Khalti payment. Please try again.')
+        return redirect('place_order')
+def khalti_verify(request):
+    pidx = request.GET.get('pidx')
+    order_id = request.GET.get('order_id')
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    url = settings.KHALTI_BASE_URL + 'epayment/lookup/'
+    headers = {
+        'Authorization': f'key {settings.KHALTI_SECRET_KEY}',
+        'Content-Type': 'application/json',
+    }
+    payload = {"pidx": pidx}
+
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+
+    if response.status_code == 200 and data.get('status') == 'Completed':
+        # Create Payment record
+        payment = Payment.objects.create(
+            user=request.user,
+            payment_id=pidx,
+            payment_method='Khalti',
+            amount_paid=str(order.order_total),
+            status='Completed',
+        )
+        order.payment = payment
+        order.is_ordered = True
+        order.status = 'Accepted'
+        order.save()
+
+        # Now create OrderProduct rows + reduce stock + clear cart
+        cart_items = CartItem.objects.filter(cart__cart_id=_cart_id(request), is_active=True)
+        for cart_item in cart_items:
+            order_product = OrderProduct.objects.create(
+                order=order,
+                payment=payment,
+                user=request.user,
+                product=cart_item.product,
+                quantity=cart_item.quantity,
+                product_price=cart_item.product.price,
+                ordered=True,
+            )
+            order_product.variations.set(cart_item.variations.all())
+            order_product.save()
+
+            product = cart_item.product
+            product.stock -= cart_item.quantity
+            product.save()
+
+        cart_items.delete()
+
+        messages.success(request, 'Payment successful! Your order has been placed.')
+        return redirect('order_complete')
+    else:
+        messages.error(request, 'Payment verification failed or was not completed.')
+        return redirect('place_order')
