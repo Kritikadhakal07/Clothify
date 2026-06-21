@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-vlgbl12mr2v8@x@67+8-&dzurrhri_o5hyljv5o&3q%=%994a&
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+LOGIN_URL = 'login'
 ALLOWED_HOSTS = []
 
 
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'accounts',
     'store',
     'carts',
+    'orders',
     
    
 ]

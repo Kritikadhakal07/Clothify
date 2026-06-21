@@ -6,6 +6,9 @@ from django.contrib import messages, auth
 from .forms import RegistrationForm
 from .models import Account
 
+from django.contrib.auth.decorators import login_required
+from orders.models import Order
+
 
 def register(request):
     if request.method == 'POST':
@@ -35,7 +38,15 @@ def register(request):
         form = RegistrationForm()
 
     context = {'form': form}
-    return render(request, 'templates/accounts/register.html', context)
+    return render(request, 'accounts/register.html', context)
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages, auth
+from .forms import RegistrationForm
+from .models import Account
+from carts.models import Carts
+from carts.views import _cart_id
 
 
 def login(request):
@@ -46,17 +57,45 @@ def login(request):
         user = auth.authenticate(email=email, password=password)
 
         if user is not None:
+            old_cart_id = _cart_id(request)   # capture session key BEFORE login rotates it
+
             auth.login(request, user)
             messages.success(request, 'You are now logged in.')
-            return redirect('dashboard')
+
+            new_cart_id = _cart_id(request)   # session key AFTER login
+
+            try:
+                cart = Carts.objects.get(cart_id=old_cart_id)
+                cart.cart_id = new_cart_id
+                cart.save()
+            except Carts.DoesNotExist:
+                pass
+
+            next_param = request.POST.get('next') or request.GET.get('next')
+            if next_param:
+                return redirect(next_param)
+            return redirect('home')
         else:
             messages.error(request, 'Invalid login credentials')
             return redirect('login')
 
-    return render(request, 'accounts/login.html')
+    next_param = request.GET.get('next', '')
+    return render(request, 'accounts/login.html', {'next': next_param})
 
 
 def logout(request):
     auth.logout(request)
     messages.success(request, 'You are logged out.')
     return redirect('login')
+
+
+@login_required(login_url='login')
+def dashboard(request):
+    orders = Order.objects.filter(user=request.user, is_ordered=True).order_by('-created_at')
+    orders_count = orders.count()
+
+    context = {
+        'orders': orders,
+        'orders_count': orders_count,
+    }
+    return render(request, 'accounts/dashboard.html', context)

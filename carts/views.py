@@ -121,10 +121,31 @@ def cart(request, total=0, quantity=0, cart_items=None):
     return render(request, 'stores/cart.html', context)
 
 
-def remove_cart(request, product_id):
-    cart      = Carts.objects.get(cart_id=_cart_id(request))
-    product   = get_object_or_404(Product, id=product_id)
-    cart_item = CartItem.objects.get(product=product, cart=cart)
+
+
+
+# def remove(request, product_id):
+#     cart      = Carts.objects.get(cart_id=_cart_id(request))
+#     product   = get_object_or_404(Product, id=product_id)
+#     cart_item = CartItem.objects.get(product=product, cart=cart)
+#     cart_item.delete()
+#     return redirect('cart')
+#     cart=Carts.objects.get(cart_id=_cart_id(request))
+#     product=get_object_or_404(Product,id=product_id)
+#     cart_item=CartItem.objects.get(product=product,cart=cart)
+#     cart_item.delete()
+#     return redirect('cart')
+
+
+def increase_quantity(request, cart_item_id):
+    cart_item = CartItem.objects.get(id=cart_item_id)
+    cart_item.quantity += 1
+    cart_item.save()
+    return redirect('cart')
+
+
+def decrease_quantity(request, cart_item_id):
+    cart_item = CartItem.objects.get(id=cart_item_id)
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
         cart_item.save()
@@ -133,14 +154,7 @@ def remove_cart(request, product_id):
     return redirect('cart')
 
 
-def remove(request, product_id):
-    cart      = Carts.objects.get(cart_id=_cart_id(request))
-    product   = get_object_or_404(Product, id=product_id)
-    cart_item = CartItem.objects.get(product=product, cart=cart)
-    cart_item.delete()
-    return redirect('cart')
-    cart=Carts.objects.get(cart_id=_cart_id(request))
-    product=get_object_or_404(Product,id=product_id)
-    cart_item=CartItem.objects.get(product=product,cart=cart)
+def remove(request, cart_item_id):
+    cart_item = CartItem.objects.get(id=cart_item_id)
     cart_item.delete()
     return redirect('cart')

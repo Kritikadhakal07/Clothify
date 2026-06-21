@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section-content padding-y bg">
+<div class="container">
+    <h3>Order #{{ order.order_number }}</h3>
+    <p>Status: {{ order.status }}</p>
+    <p>Shipping to: {{ order.full_name }}, {{ order.full_address }}, {{ order.city }}, {{ order.state }}, {{ order.country }}</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order_products %}
+            <tr>
+                <td>
+                    {{ item.product.product_name }}
+                    {% for variation in item.variations.all %}
+                        <br><small class="text-muted">{{ variation.variation_category|capfirst }}: {{ variation.variation_value|capfirst }}</small>
+                    {% endfor %}
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.product_price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <hr>
+    <p>Sub Total: ${{ sub_total }}</p>
+    <p>Tax: ${{ order.tax }}</p>
+    <p><strong>Grand Total: ${{ order.order_total }}</strong></p>
+</div>
+</section>
+{% endblock content %}
