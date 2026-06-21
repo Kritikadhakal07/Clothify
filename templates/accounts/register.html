@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section class="section-content padding-y bg">
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h3>Register</h3>
+                    <form method="POST" action="{% url 'register' %}">
+                        {% csrf_token %}
+                        {{ form.first_name }}
+                        {{ form.last_name }}
+                        {{ form.phone_number }}
+                        {{ form.email }}
+                        {{ form.username }}
+                        {{ form.password }}
+                        {{ form.confirm_password }}
+                        <button type="submit" class="btn btn-primary mt-3">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+{% endblock content %}
